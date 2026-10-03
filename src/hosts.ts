@@ -22,13 +22,13 @@ export interface SurfaceHosts<Id extends string> {
   getUrl(baseUrl: string | URL, surface: Id, path?: string): string
 }
 
-/** Map surfaces to ASCII subdomains of a base hostname; `null` places a surface on the base hostname itself. */
-export function defineSurfaceHosts<const T extends Record<string, string | null>>(
-  subdomains: T,
-): SurfaceHosts<keyof T & string> {
-  const surfaceBySubdomain = new Map<string | null, keyof T & string>()
+/** Map surfaces to ASCII subdomains of a base hostname; `null` places a surface on the base hostname itself. Pass an ID union as the type argument to require exactly those surfaces. */
+export function defineSurfaceHosts<Id extends string>(
+  subdomains: Record<Id, string | null>,
+): SurfaceHosts<Id> {
+  const surfaceBySubdomain = new Map<string | null, Id>()
   const subdomainBySurface = new Map<string, string | null>()
-  for (const [surface, value] of Object.entries(subdomains)) {
+  for (const [surface, value] of Object.entries(subdomains) as [Id, string | null][]) {
     // Empty IDs would be falsy and break truthiness checks of `host.surface`.
     if (!surface) throw new Error("nuxt-surface: surface IDs must not be empty.")
     if (value === "")
@@ -60,7 +60,7 @@ export function defineSurfaceHosts<const T extends Record<string, string | null>
 
   const surfaceSubdomains = Object.freeze(Object.fromEntries(subdomainBySurface))
 
-  function surfaceHostname(baseHostname: string, surface: keyof T & string) {
+  function surfaceHostname(baseHostname: string, surface: Id) {
     const base = asciiHostname(baseHostname)
     const subdomain = subdomainBySurface.get(surface)
     // Only null denotes the base host; an unknown ID must not silently land there.
@@ -69,7 +69,7 @@ export function defineSurfaceHosts<const T extends Record<string, string | null>
   }
 
   return {
-    subdomains: surfaceSubdomains as Record<keyof T & string, string | null>,
+    subdomains: surfaceSubdomains as Record<Id, string | null>,
     resolve(hostname, baseHostname) {
       const host = asciiHostname(hostname)
       const base = asciiHostname(baseHostname)

@@ -1,5 +1,10 @@
 import module, { type ModuleOptions } from "nuxt-surface"
-import { defineSurfaceHosts, type ResolvedHost, type UnmappedHost } from "nuxt-surface/hosts"
+import {
+  defineSurfaceHosts,
+  type ResolvedHost,
+  type SurfaceHosts,
+  type UnmappedHost,
+} from "nuxt-surface/hosts"
 
 const options: ModuleOptions = { surfaces: { docs: "/docs" } }
 const hosts = defineSurfaceHosts({ site: null, docs: "docs" })
@@ -21,4 +26,13 @@ hosts.subdomains.docs = "manuals"
 hosts.subdomains = { site: null, docs: "manuals" }
 // @ts-expect-error Declared subdomains list only mapped surfaces.
 void hosts.subdomains.tenant
-void [module, options, surface, unmapped, mapped, anyUnmapped, subdomain]
+// Explicit IDs check the map against an existing union.
+const explicit: SurfaceHosts<"site" | "docs"> = defineSurfaceHosts<"site" | "docs">({
+  site: null,
+  docs: "docs",
+})
+// @ts-expect-error Explicit IDs require a subdomain for each surface.
+defineSurfaceHosts<"site" | "docs">({ site: null })
+// @ts-expect-error Explicit IDs reject other surfaces.
+defineSurfaceHosts<"site" | "docs">({ site: null, docs: "docs", blog: "blog" })
+void [module, options, surface, unmapped, mapped, anyUnmapped, subdomain, explicit]
