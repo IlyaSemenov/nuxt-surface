@@ -17,9 +17,9 @@ export interface SurfaceHosts<Id extends string> {
   /** Find the surface of a request hostname, or describe a host that no surface claims; both hostnames must be ASCII, as `URL.hostname` returns them. */
   resolve(hostname: string, baseHostname: string): ResolvedHost<Id>
   /** Build the lowercased hostname of a surface on an ASCII base hostname. */
-  hostname(baseHostname: string, surface: Id): string
+  getHostname(baseHostname: string, surface: Id): string
   /** Build an absolute URL on a surface's host, keeping the protocol and port of the base URL; throws if `path` leaves the base origin or the base host can't take the surface's subdomain, such as an IP address. */
-  url(baseUrl: string | URL, surface: Id, path?: string): string
+  getUrl(baseUrl: string | URL, surface: Id, path?: string): string
 }
 
 /** Map surfaces to ASCII subdomains of a base hostname; `null` places a surface on the base hostname itself. */
@@ -41,7 +41,7 @@ export function defineSurfaceHosts<const T extends Record<string, string | null>
         `nuxt-surface: surface ${surface} subdomain must be dot-separated labels of ASCII letters, digits, and hyphens. Use Punycode for Unicode names.`,
       )
     const subdomain = value === null ? null : value.toLowerCase()
-    // URLs also reject some ASCII labels, such as invalid Punycode, so url() could never build them.
+    // URLs also reject some ASCII labels, such as invalid Punycode, so getUrl() could never build them.
     if (
       subdomain !== null &&
       !setHostname(new URL("http://example.invalid"), `${subdomain}.example.invalid`)
@@ -84,8 +84,8 @@ export function defineSurfaceHosts<const T extends Record<string, string | null>
       if (surface !== undefined) return { surface }
       return subdomain === null ? { domain: host } : { subdomain }
     },
-    hostname: surfaceHostname,
-    url(baseUrl, surface, path = "/") {
+    getHostname: surfaceHostname,
+    getUrl(baseUrl, surface, path = "/") {
       const base = new URL(baseUrl)
       const url = new URL(path, base)
       // Compare parsed URLs: backslashes and whitespace can also change the host; blob: keeps the inner origin.

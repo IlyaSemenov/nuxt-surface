@@ -12,9 +12,9 @@ const anyHost: ResolvedHost<string> = host
 const anyUnmapped: UnmappedHost | undefined = anyHost.surface !== undefined ? undefined : anyHost
 const subdomain: string | null = hosts.subdomains.docs
 // @ts-expect-error Surface URLs accept only mapped surfaces.
-hosts.url("https://example.com", "tenant")
+hosts.getUrl("https://example.com", "tenant")
 // @ts-expect-error Surface hostnames accept only mapped surfaces.
-hosts.hostname("example.com", "tenant")
+hosts.getHostname("example.com", "tenant")
 // @ts-expect-error Declared subdomains are read-only.
 hosts.subdomains.docs = "manuals"
 // @ts-expect-error Declared subdomains are read-only.

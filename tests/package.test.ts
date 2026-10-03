@@ -12,7 +12,7 @@ const root = resolve(import.meta.dir, "..")
 
 test("public package exports", () => {
   expect(typeof module).toBe("function")
-  expect(defineSurfaceHosts({ docs: "docs" }).url("https://example.com", "docs")).toBe(
+  expect(defineSurfaceHosts({ docs: "docs" }).getUrl("https://example.com", "docs")).toBe(
     "https://docs.example.com/",
   )
   expect(pkg.name).toBe("nuxt-surface")
@@ -52,7 +52,7 @@ test("hosts install and typecheck without Nuxt", async () => {
     await writeFile(
       join(consumer, "index.mjs"),
       `import { defineSurfaceHosts } from "nuxt-surface/hosts"
-console.log(defineSurfaceHosts({ docs: "docs" }).hostname("example.com", "docs"))
+console.log(defineSurfaceHosts({ docs: "docs" }).getHostname("example.com", "docs"))
 `,
     )
     expect(await $`node index.mjs`.cwd(consumer).text()).toBe("docs.example.com\n")

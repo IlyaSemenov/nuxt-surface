@@ -156,20 +156,20 @@ Any other result, including `undefined` from missing data or a promise, throws.
 On the server this fails the render; with `ssr: false` the error happens in the browser.
 
 Links to another surface are full page loads.
-`url()` builds them on the surface's host, keeping the protocol and port of the base URL.
+`getUrl()` builds them on the surface's host, keeping the protocol and port of the base URL.
 Surfaces on subdomains need a base URL with a domain name rather than an IP address:
 
 ```ts
-const guideUrl = surfaceHosts.url(useRuntimeConfig().public.baseUrl, "docs", "/guide/42")
+const guideUrl = surfaceHosts.getUrl(useRuntimeConfig().public.baseUrl, "docs", "/guide/42")
 ```
 
 An absolute `path` on the origin of the base URL moves to the surface's host.
 One on any other origin throws, including the surface's own host.
-So don't pass asset URLs, which `app.cdnURL` makes absolute on another origin; resolve them against the surface URL instead, as in `new URL(asset, surfaceHosts.url(baseUrl, "site")).href`.
+So don't pass asset URLs, which `app.cdnURL` makes absolute on another origin; resolve them against the surface URL instead, as in `new URL(asset, surfaceHosts.getUrl(baseUrl, "site")).href`.
 
 Links to a customer workspace are up to your app, since only it knows the workspace's domain.
 
-`hostname(baseHostname, surface)` returns just the hostname of a surface.
+`getHostname(baseHostname, surface)` returns just the hostname of a surface.
 `subdomains` maps each surface to its lowercased subdomain, or `null` for the base hostname, for example to keep customers from registering a surface's subdomain.
 
 Any other way to provide the data works too, as long as it is ready before Nuxt's router plugin on both the server and the browser.

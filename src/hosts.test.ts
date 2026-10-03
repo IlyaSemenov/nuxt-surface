@@ -14,11 +14,11 @@ describe("surface hosts", () => {
   })
 
   test("surface URLs keep the protocol, port and path", () => {
-    expect(hosts.url("https://example.localhost:5480", "docs", "/guide?id=42#examples")).toBe(
+    expect(hosts.getUrl("https://example.localhost:5480", "docs", "/guide?id=42#examples")).toBe(
       "https://docs.example.localhost:5480/guide?id=42#examples",
     )
-    expect(hosts.url("https://example.com", "site")).toBe("https://example.com/")
-    expect(hosts.url("https://example.com/base/", "docs", "guide")).toBe(
+    expect(hosts.getUrl("https://example.com", "site")).toBe("https://example.com/")
+    expect(hosts.getUrl("https://example.com/base/", "docs", "guide")).toBe(
       "https://docs.example.com/base/guide",
     )
   })
@@ -32,11 +32,11 @@ describe("surface hosts", () => {
       " /\\elsewhere.test/guide",
       "blob:https://example.com:8443/id",
     ]) {
-      expect(() => hosts.url("https://example.com:8443", "docs", path)).toThrow(
+      expect(() => hosts.getUrl("https://example.com:8443", "docs", path)).toThrow(
         "path must not change",
       )
     }
-    expect(hosts.url("https://example.com:8443", "docs", "https://example.com:8443/guide")).toBe(
+    expect(hosts.getUrl("https://example.com:8443", "docs", "https://example.com:8443/guide")).toBe(
       "https://docs.example.com:8443/guide",
     )
   })
@@ -57,12 +57,12 @@ test("surfaces cannot share a host", () => {
 test("surface hosts resolve back to their surfaces regardless of case", () => {
   const hosts = defineSurfaceHosts({ site: null, docs: "Docs", regional: "EU.Docs" })
   for (const id of ["site", "docs", "regional"] as const) {
-    const hostname = new URL(hosts.url("https://example.com:8443", id)).hostname
+    const hostname = new URL(hosts.getUrl("https://example.com:8443", id)).hostname
     expect(hosts.resolve(hostname, "example.com")).toEqual({ surface: id })
-    expect(hosts.hostname("Example.COM", id)).toBe(hostname)
+    expect(hosts.getHostname("Example.COM", id)).toBe(hostname)
   }
-  expect(hosts.url("https://example.com", "docs")).toBe("https://docs.example.com/")
-  expect(hosts.hostname("example.com", "regional")).toBe("eu.docs.example.com")
+  expect(hosts.getUrl("https://example.com", "docs")).toBe("https://docs.example.com/")
+  expect(hosts.getHostname("example.com", "regional")).toBe("eu.docs.example.com")
 })
 
 test("declared subdomains are lowercased and read-only", () => {
@@ -94,15 +94,15 @@ test("hostname arguments are ASCII", () => {
   expect(() => hosts.resolve("docs.xn--e1afmkfd.xn--p1ai", "пример.рф")).toThrow(
     "hostname пример.рф must be ASCII",
   )
-  expect(() => hosts.hostname("пример.рф", "docs")).toThrow("hostname пример.рф must be ASCII")
+  expect(() => hosts.getHostname("пример.рф", "docs")).toThrow("hostname пример.рф must be ASCII")
 })
 
 test("internationalized hosts work in Punycode", () => {
   const baseUrl = new URL("https://пример.рф")
   const hosts = defineSurfaceHosts({ site: null, docs: "xn--d1aml" })
-  const hostname = hosts.hostname(baseUrl.hostname, "docs")
+  const hostname = hosts.getHostname(baseUrl.hostname, "docs")
   expect(hostname).toBe("xn--d1aml.xn--e1afmkfd.xn--p1ai")
-  expect(new URL(hosts.url(baseUrl, "docs")).hostname).toBe(hostname)
+  expect(new URL(hosts.getUrl(baseUrl, "docs")).hostname).toBe(hostname)
   expect(hosts.resolve(new URL("https://док.пример.рф").hostname, baseUrl.hostname)).toEqual({
     surface: "docs",
   })
@@ -114,16 +114,16 @@ test("internationalized hosts work in Punycode", () => {
 test("surface URLs throw instead of falling back to the base host", () => {
   const hosts = defineSurfaceHosts({ site: null, docs: "docs" })
   for (const base of ["http://127.0.0.1:3000", "http://[::1]:3000"]) {
-    expect(() => hosts.url(base, "docs")).toThrow("cannot build surface docs hostname")
-    expect(hosts.url(base, "site")).toBe(`${base}/`)
+    expect(() => hosts.getUrl(base, "docs")).toThrow("cannot build surface docs hostname")
+    expect(hosts.getUrl(base, "site")).toBe(`${base}/`)
   }
 })
 
 test("unknown surfaces have no host", () => {
   const subdomains: Record<string, string | null> = { site: null }
   const hosts = defineSurfaceHosts(subdomains)
-  expect(() => hosts.hostname("example.com", "typo")).toThrow("unknown surface typo")
-  expect(() => hosts.url("https://example.com", "typo")).toThrow("unknown surface typo")
+  expect(() => hosts.getHostname("example.com", "typo")).toThrow("unknown surface typo")
+  expect(() => hosts.getUrl("https://example.com", "typo")).toThrow("unknown surface typo")
 })
 
 test("hosts keep the subdomains they were defined with", () => {
@@ -132,6 +132,6 @@ test("hosts keep the subdomains they were defined with", () => {
   subdomains.docs = "manuals"
   subdomains.blog = "blog"
   expect(hosts.subdomains).toEqual({ site: null, docs: "docs" })
-  expect(hosts.hostname("example.com", "docs")).toBe("docs.example.com")
+  expect(hosts.getHostname("example.com", "docs")).toBe("docs.example.com")
   expect(hosts.resolve("manuals.example.com", "example.com")).toEqual({ subdomain: "manuals" })
 })
