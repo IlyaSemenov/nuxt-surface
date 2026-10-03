@@ -73,7 +73,6 @@ export default {
 ```
 
 `selectSurfaceRoutes()` serves the selected surface's pages without its prefix, so `surfaces/docs/guide/[id].vue` answers at `/guide/42`.
-Without this call, Nuxt serves all pages at their prefixed paths and `useSurface()` throws.
 
 ## Choosing by hostname
 
@@ -101,6 +100,7 @@ runtimeConfig: {
 ```
 
 `baseUrl` points to your main domain, also for requests to a customer's own domain.
+Surfaces on subdomains need a domain name there, such as `example.localhost` in development rather than `127.0.0.1`.
 
 `nuxt-surface/hosts` maps surfaces to subdomains of a base hostname.
 It doesn't depend on Nuxt, so your app, Nitro, and server code outside Nuxt can share one map:
@@ -142,38 +142,33 @@ export default {
 } satisfies RouterConfig
 ```
 
+Any other way to provide the data works too, as long as it is ready before Nuxt's router plugin on both the server and the browser.
+A regular app plugin runs too late, and with `ssr: false` the data must arrive in the HTML.
+
 `resolve()` returns `{ surface }` for a mapped host.
 Other hosts are up to your app: a subdomain of the base hostname returns `{ subdomain }`, and any other hostname returns `{ domain }`.
-Their `surface` is `undefined`, so compare `host.surface` with `undefined` or a surface ID to tell the cases apart.
-To type your server context or lookup, use the exported `ResolvedHost<Id>` and `UnmappedHost` types.
-Hostnames are case-insensitive ASCII, as `new URL(url).hostname` returns them; Unicode ones throw.
-Write internationalized surface subdomains in Punycode.
-Unmapped hosts come back in ASCII too, so store and look up customer subdomains and domains in that form.
+The result type is `ResolvedHost<Id>`, and unmapped hosts are `UnmappedHost`.
+
+Hostnames are case-insensitive ASCII, as `new URL(url).hostname` returns them.
+Write internationalized surface subdomains in Punycode, and store customer subdomains and domains in ASCII for lookups.
 
 When the selector returns `null`, the router has no routes and Nuxt renders its 404 page.
 With SSR the response status is 404; with `ssr: false` the HTML comes with status 200 and the browser shows the 404 page.
-Any other result, including `undefined` from missing data or a promise, throws.
-On the server this fails the render; with `ssr: false` the error happens in the browser.
 
 Links to another surface are full page loads.
-`getUrl()` builds them on the surface's host, keeping the protocol and port of the base URL.
-Surfaces on subdomains need a base URL with a domain name rather than an IP address:
+`getUrl()` builds them on the surface's host, keeping the protocol and port of the base URL:
 
 ```ts
 const guideUrl = surfaceHosts.getUrl(useRuntimeConfig().public.baseUrl, "docs", "/guide/42")
 ```
 
-An absolute `path` on the origin of the base URL moves to the surface's host.
-One on any other origin throws, including the surface's own host.
-So don't pass asset URLs, which `app.cdnURL` makes absolute on another origin; resolve them against the surface URL instead, as in `new URL(asset, surfaceHosts.getUrl(baseUrl, "site")).href`.
+`path` resolves against the base URL and must stay on its origin.
+For asset URLs, which `app.cdnURL` can make absolute, use `new URL(asset, surfaceHosts.getUrl(baseUrl, "site")).href` instead.
 
-Links to a customer workspace are up to your app, since only it knows the workspace's domain.
+Links to customer workspaces are up to your app.
 
 `getHostname(baseHostname, surface)` returns just the hostname of a surface.
 `subdomains` maps each surface to its lowercased subdomain, or `null` for the base hostname, for example to keep customers from registering a surface's subdomain.
-
-Any other way to provide the data works too, as long as it is ready before Nuxt's router plugin on both the server and the browser.
-A regular app plugin runs too late, and with `ssr: false` the data must arrive in the HTML.
 
 ## Reading the surface
 
@@ -186,7 +181,6 @@ It returns one of the declared IDs, typed as `SurfaceId` after `nuxt prepare`, o
 Plugins, global middleware, and `error.vue` still run without a surface, so handle `null` there.
 
 The surface stays the same for the whole page session, including client-side navigation and page HMR.
-Hydration reuses the server's choice without calling the selector again.
 To switch surfaces, load a new page with a regular link, `<NuxtLink external>`, or `location.assign()`.
 
 ## Pages
@@ -201,7 +195,7 @@ Route names keep the prefix, so named navigation uses `surfaces-docs-guide-id`.
 - If a page computes its `definePageMeta()` path, the build can't check it, and the page goes to the surface whose prefix matches its runtime path.
   With `experimental.scanPageMeta` disabled, this applies to every `definePageMeta()` path.
 
-The build fails when a page belongs to no surface, a parent page spans surfaces, or a surface has no pages.
+The build fails when a page belongs to no surface or a surface has no pages.
 Redirects from `routeRules` work on every surface and don't count as its pages.
 
 To change routes further, transform the selected array.
