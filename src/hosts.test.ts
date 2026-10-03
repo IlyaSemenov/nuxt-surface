@@ -119,6 +119,14 @@ test("surface URLs throw instead of falling back to the base host", () => {
   }
 })
 
+test("prototype keys don't match surfaces", () => {
+  const hosts = defineSurfaceHosts<string>({ site: null, docs: "docs" })
+  for (const key of ["constructor", "__proto__"]) {
+    expect(hosts.resolve(`${key}.example.com`, "example.com")).toEqual({ subdomain: key })
+    expect(() => hosts.getHostname("example.com", key)).toThrow(`unknown surface ${key}`)
+  }
+})
+
 test("unknown surfaces have no host", () => {
   const subdomains: Record<string, string | null> = { site: null }
   const hosts = defineSurfaceHosts(subdomains)
