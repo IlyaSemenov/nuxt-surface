@@ -79,6 +79,38 @@ test("surface IDs must not be empty", () => {
   expect(() => defineSurfaceHosts({ "": "docs" })).toThrow("IDs must not be empty")
 })
 
+test("subdomains are ASCII hostname labels that URLs accept", () => {
+  for (const subdomain of ["док", "a/b", "docs:8080", "docs.", "eu..docs"]) {
+    expect(() => defineSurfaceHosts({ docs: subdomain })).toThrow("Use Punycode")
+  }
+  expect(() => defineSurfaceHosts({ docs: "xn--a" })).toThrow("docs subdomain xn--a is not a valid")
+})
+
+test("hostname arguments are ASCII", () => {
+  const hosts = defineSurfaceHosts({ site: null, docs: "docs" })
+  expect(() => hosts.resolve("док.example.com", "example.com")).toThrow(
+    "hostname док.example.com must be ASCII",
+  )
+  expect(() => hosts.resolve("docs.xn--e1afmkfd.xn--p1ai", "пример.рф")).toThrow(
+    "hostname пример.рф must be ASCII",
+  )
+  expect(() => hosts.hostname("пример.рф", "docs")).toThrow("hostname пример.рф must be ASCII")
+})
+
+test("internationalized hosts work in Punycode", () => {
+  const baseUrl = new URL("https://пример.рф")
+  const hosts = defineSurfaceHosts({ site: null, docs: "xn--d1aml" })
+  const hostname = hosts.hostname(baseUrl.hostname, "docs")
+  expect(hostname).toBe("xn--d1aml.xn--e1afmkfd.xn--p1ai")
+  expect(new URL(hosts.url(baseUrl, "docs")).hostname).toBe(hostname)
+  expect(hosts.resolve(new URL("https://док.пример.рф").hostname, baseUrl.hostname)).toEqual({
+    surface: "docs",
+  })
+  expect(hosts.resolve(new URL("https://пример.орг").hostname, baseUrl.hostname)).toEqual({
+    domain: "xn--e1afmkfd.xn--c1avg",
+  })
+})
+
 test("unknown surfaces have no host", () => {
   const subdomains: Record<string, string | null> = { site: null }
   const hosts = defineSurfaceHosts(subdomains)

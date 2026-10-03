@@ -14,15 +14,15 @@ export type ResolvedHost<Id extends string> = { surface: Id } | UnmappedHost
 export interface SurfaceHosts<Id extends string> {
   /** Lowercased subdomain of each surface; `null` marks the base hostname. */
   readonly subdomains: Readonly<Record<Id, string | null>>
-  /** Find the surface of a request hostname, or describe a host that no surface claims. */
+  /** Find the surface of a request hostname, or describe a host that no surface claims; both hostnames must be ASCII, as `URL.hostname` returns them. */
   resolve(hostname: string, baseHostname: string): ResolvedHost<Id>
-  /** Build the lowercased hostname of a surface on a base hostname. */
+  /** Build the lowercased hostname of a surface on an ASCII base hostname. */
   hostname(baseHostname: string, surface: Id): string
   /** Build an absolute URL on a surface's host, keeping the protocol and port of the base URL. */
   url(baseUrl: string | URL, surface: Id, path?: string): string
 }
 
-/** Map surfaces to subdomains of a base hostname; `null` places a surface on the base hostname itself. */
+/** Map surfaces to ASCII subdomains of a base hostname; `null` places a surface on the base hostname itself. */
 export function defineSurfaceHosts<const T extends Record<string, string | null>>(
   subdomains: T,
 ): SurfaceHosts<keyof T & string> {
@@ -35,7 +35,20 @@ export function defineSurfaceHosts<const T extends Record<string, string | null>
       throw new Error(
         `nuxt-surface: surface ${surface} has an empty subdomain. Use null for the base host.`,
       )
+    // URLs convert Unicode hostnames to Punycode, which resolve() would not match.
+    if (value !== null && !/^[a-z\d-]+(?:\.[a-z\d-]+)*$/i.test(value))
+      throw new Error(
+        `nuxt-surface: surface ${surface} subdomain must be dot-separated labels of ASCII letters, digits, and hyphens. Use Punycode for Unicode names.`,
+      )
     const subdomain = value === null ? null : value.toLowerCase()
+    // URLs also reject some ASCII labels, such as invalid Punycode, so url() could never build them.
+    if (
+      subdomain !== null &&
+      !setHostname(new URL("http://example.invalid"), `${subdomain}.example.invalid`)
+    )
+      throw new Error(
+        `nuxt-surface: surface ${surface} subdomain ${value} is not a valid hostname.`,
+      )
     const other = surfaceBySubdomain.get(subdomain)
     if (other !== undefined)
       throw new Error(
@@ -48,7 +61,7 @@ export function defineSurfaceHosts<const T extends Record<string, string | null>
   const surfaceSubdomains = Object.freeze(Object.fromEntries(subdomainBySurface))
 
   function surfaceHostname(baseHostname: string, surface: keyof T & string) {
-    const base = baseHostname.toLowerCase()
+    const base = asciiHostname(baseHostname)
     const subdomain = subdomainBySurface.get(surface)
     // Only null denotes the base host; an unknown ID must not silently land there.
     if (subdomain === undefined) throw new Error(`nuxt-surface: unknown surface ${surface}.`)
@@ -58,8 +71,8 @@ export function defineSurfaceHosts<const T extends Record<string, string | null>
   return {
     subdomains: surfaceSubdomains as Record<keyof T & string, string | null>,
     resolve(hostname, baseHostname) {
-      const host = hostname.toLowerCase()
-      const base = baseHostname.toLowerCase()
+      const host = asciiHostname(hostname)
+      const base = asciiHostname(baseHostname)
       const subdomain =
         host === base
           ? null
@@ -82,4 +95,19 @@ export function defineSurfaceHosts<const T extends Record<string, string | null>
       return url.href
     },
   }
+}
+
+/** Lowercase a hostname, rejecting Unicode, which never matches the Punycode hostnames of URLs. */
+function asciiHostname(hostname: string): string {
+  if (/[\u0080-\uffff]/.test(hostname))
+    throw new Error(
+      `nuxt-surface: hostname ${hostname} must be ASCII, as new URL(url).hostname returns it.`,
+    )
+  return hostname.toLowerCase()
+}
+
+/** Set a URL's hostname and tell whether it took: URL setters silently keep the old hostname instead of throwing. */
+function setHostname(url: URL, hostname: string): boolean {
+  url.hostname = hostname
+  return url.hostname === hostname
 }

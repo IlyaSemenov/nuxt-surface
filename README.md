@@ -146,7 +146,9 @@ export default {
 Other hosts are up to your app: a subdomain of the base hostname returns `{ subdomain }`, and any other hostname returns `{ domain }`.
 Their `surface` is `undefined`, so compare `host.surface` with `undefined` or a surface ID to tell the cases apart.
 To type your server context or lookup, use the exported `ResolvedHost<Id>` and `UnmappedHost` types.
-Subdomains are case-insensitive.
+Hostnames are case-insensitive ASCII, as `new URL(url).hostname` returns them; Unicode ones throw.
+Write internationalized surface subdomains in Punycode.
+Unmapped hosts come back in ASCII too, so store and look up customer subdomains and domains in that form.
 
 When the selector returns `null`, the router has no routes and Nuxt renders its 404 page.
 With SSR the response status is 404; with `ssr: false` the HTML comes with status 200 and the browser shows the 404 page.
