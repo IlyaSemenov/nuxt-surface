@@ -1,5 +1,11 @@
 # nuxt-surface
 
+## 0.4.1
+
+### Patch Changes
+
+- 7b1a56d: `subdomains` has no prototype, so `in` checks and lookups by arbitrary keys see only surfaces.
+
 ## 0.4.0
 
 ### Minor Changes
