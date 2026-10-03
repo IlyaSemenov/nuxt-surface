@@ -1,6 +1,6 @@
 {
   "name": "nuxt-surface",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Serve several sites from one Nuxt app, each with its own pages at the same URLs.",
   "keywords": [
     "nuxt",
