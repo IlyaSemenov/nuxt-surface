@@ -83,7 +83,6 @@ Describe the user-visible change.
 - Leave tenant lookup, base hostname configuration, and proxy header trust to the application.
 - Keep package templates separate from Nuxt-generated files.
 - Keep generated declarations as readable multiline templates outside module registration.
-- Before the first publication, keep `.changeset/initial-release.md` as the only changeset, with the text `Initial beta release.`
 
 ## Integration checks
 
