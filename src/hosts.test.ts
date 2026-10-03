@@ -124,6 +124,7 @@ test("prototype keys don't match surfaces", () => {
   for (const key of ["constructor", "__proto__"]) {
     expect(hosts.resolve(`${key}.example.com`, "example.com")).toEqual({ subdomain: key })
     expect(() => hosts.getHostname("example.com", key)).toThrow(`unknown surface ${key}`)
+    expect(key in hosts.subdomains).toBe(false)
   }
 })
 

@@ -58,7 +58,10 @@ export function defineSurfaceHosts<Id extends string>(
     subdomainBySurface.set(surface, subdomain)
   }
 
-  const surfaceSubdomains = Object.freeze(Object.fromEntries(subdomainBySurface))
+  // Without a prototype, `in` checks and lookups by arbitrary keys see only surfaces.
+  const surfaceSubdomains = Object.freeze(
+    Object.setPrototypeOf(Object.fromEntries(subdomainBySurface), null),
+  )
 
   function surfaceHostname(baseHostname: string, surface: Id) {
     const base = asciiHostname(baseHostname)
