@@ -106,10 +106,10 @@ Surfaces on subdomains need a domain name there, such as `example.localhost` in 
 It doesn't depend on Nuxt, so your app, Nitro, and server code outside Nuxt can share one map:
 
 ```ts
-// shared/surface-hosts.ts
+// shared/product-surfaces.ts
 import { defineSurfaceHosts } from "nuxt-surface/hosts"
 
-export const surfaceHosts = defineSurfaceHosts({
+export const productSurfaces = defineSurfaceHosts({
   site: null, // example.com
   docs: "docs", // docs.example.com
 })
@@ -119,11 +119,11 @@ export const surfaceHosts = defineSurfaceHosts({
 // server/request-context.ts
 import { getRequestURL } from "h3"
 import { defineRequestContextProvider } from "nuxt-request-context/provider"
-import { surfaceHosts } from "#shared/surface-hosts"
+import { productSurfaces } from "#shared/product-surfaces"
 
 export default defineRequestContextProvider(async event => {
   const baseHostname = new URL(useRuntimeConfig(event).public.baseUrl).hostname
-  const host = surfaceHosts.resolve(getRequestURL(event).hostname, baseHostname)
+  const host = productSurfaces.resolve(getRequestURL(event).hostname, baseHostname)
   if (host.surface !== undefined) return { surface: host.surface }
   // Other hosts are customer workspaces; findWorkspace() is your lookup by host.subdomain or host.domain.
   const workspace = await findWorkspace(host)
@@ -159,11 +159,11 @@ Links to another surface are full page loads.
 `getUrl()` builds them on the surface's host, keeping the protocol and port of the base URL:
 
 ```ts
-const guideUrl = surfaceHosts.getUrl(useRuntimeConfig().public.baseUrl, "docs", "/guide/42")
+const guideUrl = productSurfaces.getUrl(useRuntimeConfig().public.baseUrl, "docs", "/guide/42")
 ```
 
 `path` resolves against the base URL and must stay on its origin.
-For asset URLs, which `app.cdnURL` can make absolute, use `new URL(asset, surfaceHosts.getUrl(baseUrl, "site")).href` instead.
+For asset URLs, which `app.cdnURL` can make absolute, use `new URL(asset, productSurfaces.getUrl(baseUrl, "site")).href` instead.
 
 Links to customer workspaces are up to your app.
 
