@@ -111,6 +111,14 @@ test("internationalized hosts work in Punycode", () => {
   })
 })
 
+test("surface URLs throw instead of falling back to the base host", () => {
+  const hosts = defineSurfaceHosts({ site: null, docs: "docs" })
+  for (const base of ["http://127.0.0.1:3000", "http://[::1]:3000"]) {
+    expect(() => hosts.url(base, "docs")).toThrow("cannot build surface docs hostname")
+    expect(hosts.url(base, "site")).toBe(`${base}/`)
+  }
+})
+
 test("unknown surfaces have no host", () => {
   const subdomains: Record<string, string | null> = { site: null }
   const hosts = defineSurfaceHosts(subdomains)

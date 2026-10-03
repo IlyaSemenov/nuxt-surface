@@ -156,7 +156,8 @@ Any other result, including `undefined` from missing data or a promise, throws.
 On the server this fails the render; with `ssr: false` the error happens in the browser.
 
 Links to another surface are full page loads.
-`url()` builds them on the surface's host, keeping the protocol and port of the base URL:
+`url()` builds them on the surface's host, keeping the protocol and port of the base URL.
+Surfaces on subdomains need a base URL with a domain name rather than an IP address:
 
 ```ts
 const guideUrl = surfaceHosts.url(useRuntimeConfig().public.baseUrl, "docs", "/guide/42")

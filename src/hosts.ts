@@ -18,7 +18,7 @@ export interface SurfaceHosts<Id extends string> {
   resolve(hostname: string, baseHostname: string): ResolvedHost<Id>
   /** Build the lowercased hostname of a surface on an ASCII base hostname. */
   hostname(baseHostname: string, surface: Id): string
-  /** Build an absolute URL on a surface's host, keeping the protocol and port of the base URL; throws if `path` leaves the base origin. */
+  /** Build an absolute URL on a surface's host, keeping the protocol and port of the base URL; throws if `path` leaves the base origin or the base host can't take the surface's subdomain, such as an IP address. */
   url(baseUrl: string | URL, surface: Id, path?: string): string
 }
 
@@ -91,7 +91,9 @@ export function defineSurfaceHosts<const T extends Record<string, string | null>
       // Compare parsed URLs: backslashes and whitespace can also change the host; blob: keeps the inner origin.
       if (url.origin !== base.origin || url.protocol !== base.protocol)
         throw new Error("nuxt-surface: path must not change the base URL's origin.")
-      url.hostname = surfaceHostname(url.hostname, surface)
+      const hostname = surfaceHostname(url.hostname, surface)
+      if (!setHostname(url, hostname))
+        throw new Error(`nuxt-surface: cannot build surface ${surface} hostname ${hostname}.`)
       return url.href
     },
   }
