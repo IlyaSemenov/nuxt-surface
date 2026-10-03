@@ -18,7 +18,7 @@ export interface SurfaceHosts<Id extends string> {
   resolve(hostname: string, baseHostname: string): ResolvedHost<Id>
   /** Build the lowercased hostname of a surface on an ASCII base hostname. */
   hostname(baseHostname: string, surface: Id): string
-  /** Build an absolute URL on a surface's host, keeping the protocol and port of the base URL. */
+  /** Build an absolute URL on a surface's host, keeping the protocol and port of the base URL; throws if `path` leaves the base origin. */
   url(baseUrl: string | URL, surface: Id, path?: string): string
 }
 

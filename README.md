@@ -162,7 +162,10 @@ Links to another surface are full page loads.
 const guideUrl = surfaceHosts.url(useRuntimeConfig().public.baseUrl, "docs", "/guide/42")
 ```
 
-A `path` that points to another origin throws.
+An absolute `path` on the origin of the base URL moves to the surface's host.
+One on any other origin throws, including the surface's own host.
+So don't pass asset URLs, which `app.cdnURL` makes absolute on another origin; resolve them against the surface URL instead, as in `new URL(asset, surfaceHosts.url(baseUrl, "site")).href`.
+
 Links to a customer workspace are up to your app, since only it knows the workspace's domain.
 
 `hostname(baseHostname, surface)` returns just the hostname of a surface.
