@@ -21,7 +21,7 @@ All customer workspaces share one surface; which customer it is stays in your ow
 Need separate modules, builds, or runtimes per site?
 Use separate apps, for example with [`nuxt-multi-app`](https://www.npmjs.com/package/nuxt-multi-app).
 
-Requires Nuxt 4 (4.0.1 or newer).
+The Nuxt module requires Nuxt 4 (4.0.1 or newer); `nuxt-surface/hosts` works without Nuxt.
 
 ## Setup
 
@@ -64,7 +64,7 @@ A fixed ID is enough to try it:
 
 ```ts
 // app/router.options.ts
-import type { RouterConfig } from "@nuxt/schema"
+import type { RouterConfig } from "nuxt/schema"
 import { selectSurfaceRoutes } from "#nuxt-surface"
 
 export default {
@@ -133,7 +133,7 @@ export default defineRequestContextProvider(async event => {
 
 ```ts
 // app/router.options.ts
-import type { RouterConfig } from "@nuxt/schema"
+import type { RouterConfig } from "nuxt/schema"
 import { useRequestContext } from "#nuxt-request-context/client"
 import { selectSurfaceRoutes } from "#nuxt-surface"
 

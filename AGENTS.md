@@ -80,6 +80,8 @@ Describe the user-visible change.
 - Store the selected ID in the Nuxt payload so hydration and page HMR reuse it.
 - Treat only `null` as a document without a surface; keep `undefined`, unknown IDs, and promises as errors.
 - Keep `nuxt-surface/hosts` free of Nuxt, h3, and other runtime imports so server packages outside Nuxt can use it.
+- Keep the package installable without Nuxt: no runtime dependencies, and `nuxt` as an optional peer.
+- Import Nuxt Kit and Schema through `nuxt/kit` and `nuxt/schema`, and annotate the module export with `NuxtModule` so its declaration doesn't reference `@nuxt/schema`.
 - Leave tenant lookup, base hostname configuration, and proxy header trust to the application.
 - Keep package templates separate from Nuxt-generated files.
 - Keep generated declarations as readable multiline templates outside module registration.

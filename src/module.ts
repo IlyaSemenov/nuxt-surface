@@ -1,6 +1,7 @@
 import { resolve } from "node:path"
 
-import { addImports, addTemplate, createResolver, defineNuxtModule, resolvePath } from "@nuxt/kit"
+import { addImports, addTemplate, createResolver, defineNuxtModule, resolvePath } from "nuxt/kit"
+import type { NuxtModule } from "nuxt/schema"
 
 import type { ModuleOptions } from "./options"
 import { validateSurfaces } from "./options"
@@ -9,8 +10,9 @@ import { clientTypesTemplate, surfacesTemplate } from "./templates"
 
 const resolver = createResolver(import.meta.url)
 
+// Annotate the export: an inferred type would reference @nuxt/schema, which consumers may not have.
 /** Validate surface ownership at build time and provide runtime route selection. */
-export default defineNuxtModule<ModuleOptions>({
+const surfaceModule: NuxtModule<ModuleOptions, ModuleOptions, false> = defineNuxtModule<ModuleOptions>({
   meta: { name: "nuxt-surface", configKey: "surface", compatibility: { nuxt: "^4.0.1" } },
   defaults: { surfaces: {} },
   async setup({ surfaces }, nuxt) {
@@ -52,3 +54,5 @@ export default defineNuxtModule<ModuleOptions>({
     })
   },
 })
+
+export default surfaceModule

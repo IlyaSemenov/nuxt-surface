@@ -4,10 +4,6 @@
   "workspaces": {
     "": {
       "name": "nuxt-surface",
-      "dependencies": {
-        "@nuxt/kit": "^4.0.1",
-        "@nuxt/schema": "^4.0.1",
-      },
       "devDependencies": {
         "@arethetypeswrong/core": "^0.18.5",
         "@changesets/cli": "^3.0.3",
@@ -31,6 +27,9 @@
       "peerDependencies": {
         "nuxt": "^4.0.1",
       },
+      "optionalPeers": [
+        "nuxt",
+      ],
     },
   },
   "packages": {

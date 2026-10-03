@@ -54,10 +54,6 @@
     "test:hmr": "SURFACE_TEST_DEV=true bun run test:nuxt",
     "test:validation": "bun test tests/validation.test.ts"
   },
-  "dependencies": {
-    "@nuxt/kit": "^4.0.1",
-    "@nuxt/schema": "^4.0.1"
-  },
   "devDependencies": {
     "@arethetypeswrong/core": "^0.18.5",
     "@changesets/cli": "^3.0.3",
@@ -80,6 +76,11 @@
   },
   "peerDependencies": {
     "nuxt": "^4.0.1"
+  },
+  "peerDependenciesMeta": {
+    "nuxt": {
+      "optional": true
+    }
   },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"

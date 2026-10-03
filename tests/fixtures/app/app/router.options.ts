@@ -1,4 +1,4 @@
-import type { RouterConfig } from "@nuxt/schema"
+import type { RouterConfig } from "nuxt/schema"
 
 import { useNuxtApp } from "#app/nuxt"
 import { useRequestContext } from "#nuxt-request-context/client"
