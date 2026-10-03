@@ -1,0 +1,93 @@
+# nuxt-surface Agent Guide
+
+## Overview
+
+Serve several sites from one Nuxt app, each with its own pages at the same URLs.
+
+Read [README.md](README.md) completely before changing the public API, package behavior, supported runtimes, or user documentation.
+
+Extend this guide only with stable, non-obvious conventions, architecture, contracts, workflows, and gotchas.
+Do not catalog files or restate information evident from their names and locations.
+
+## Scope
+
+- Keep production code in `src/`.
+- Keep focused module tests beside their source as `*.test.ts`.
+- Keep integration, package-boundary, and type-inference tests in `tests/`.
+- Name compile-only tests `*.type-test.ts`.
+- Keep `src/index.ts` limited to explicit public exports.
+- Treat `package.json` exports and supported runtimes as public contracts.
+
+## Documentation
+
+- Write public README and JSDoc text for package users who do not know the implementation.
+- Add JSDoc to every exported declaration and to internal helpers whose contract, inputs, output, or failure behavior is not obvious.
+- Add inline comments beside every non-obvious invariant, algorithmic choice, safety constraint, and intentionally limited behavior.
+- Update nearby JSDoc and inline comments whenever the documented code changes, and remove comments that no longer apply.
+- Do not narrate self-evident syntax or restate what a name already communicates.
+- Do not document obvious or implied defaults.
+- Describe a default only when readers need it to make a decision or avoid surprising behavior.
+- Use One Sentence Per Line for connected prose.
+- Keep semantically connected explanations as prose paragraphs.
+- Use lists for separate assertions instead of presenting them as prose paragraphs.
+
+## Changesets
+
+- Add one `.changeset/*.md` file for each independently releasable user-visible change.
+- Do not add changesets for internal refactors, maintenance, tests, or documentation changes that do not require a package release.
+- Choose the SemVer bump from the public contract: `patch` for backward-compatible fixes and `minor` for backward-compatible functionality.
+- Before 1.0, use `minor` for breaking changes; starting with 1.0, use `major` and remove this rule.
+- Create `.changeset/<unique-name>.md` with this format:
+
+```markdown
+---
+"nuxt-surface": patch
+---
+
+Describe the user-visible change.
+```
+
+- Briefly describe the user-observable change or new capability in the public contract, without implementation details or rationale.
+  Prefer a single sentence.
+- Do not edit the package version or `CHANGELOG.md` by hand, and do not run `changeset version` or `changeset publish`; the release workflow consumes pending changesets.
+
+## Tests
+
+- Add a `describe` block where the file gives a reason for it: several APIs or behaviors in one file, or a fixture that belongs to some cases but not all.
+  Name such a block after what it covers and keep its fixtures inside it.
+- Distinguish several same-kind values by role rather than by order.
+  When values differ only by order, number them with digits instead of ordinal words.
+- Keep tests deterministic so a failure repeats on every run.
+  Generate random inputs from an explicit seed and print the seed in failure messages so the failing input can be replayed.
+
+## Checks
+
+- Run the `types` script when public types or TypeScript configuration change.
+- Run the `test` script when behavior changes.
+- Run the `build` script when package exports, declarations, or supported runtimes change.
+
+## Surface contracts
+
+- Validate ownership in `app.pages` during `app:templates` without changing Nuxt's page tree; do not use `pages:resolved`, which Nuxt skips without page metadata scanning.
+- Move only the selected surface's top-level records to public paths at runtime.
+- Use the same ownership rule for build validation and runtime selection.
+- Keep ownership in the standard resolved Nuxt page tree; do not add a filesystem scanner.
+- Treat records with Nuxt's synchronously imported component stub (route-rule redirects, component tests) as infrastructure: skip them in validation and keep them unchanged on every surface; `_sync` is absent at runtime, so match the component there.
+- Keep the explicit `/` declaration as the only remainder-surface contract.
+- Reject parent pages spanning surfaces instead of discarding or promoting them.
+- Integrate through the application's `routes()` call to `selectSurfaceRoutes()`; do not compose or rewrite router options files.
+- Treat generated route records as shared: copy only records whose paths change, and never mutate them.
+- Store the selected ID in the Nuxt payload so hydration and page HMR reuse it.
+- Treat only `null` as a document without a surface; keep `undefined`, unknown IDs, and promises as errors.
+- Keep `nuxt-surface/hosts` free of Nuxt, h3, and other runtime imports so server packages outside Nuxt can use it.
+- Leave tenant lookup, base hostname configuration, and proxy header trust to the application.
+- Keep package templates separate from Nuxt-generated files.
+- Keep generated declarations as readable multiline templates outside module registration.
+- Before the first publication, keep `.changeset/initial-release.md` as the only changeset, with the text `Initial beta release.`
+
+## Integration checks
+
+- Run `build` before checking public exports or running Nuxt fixture tests.
+- Run `test:nuxt`, `types:nuxt`, `test:spa`, `test:hmr`, and `test:validation` for changes to Nuxt integration or selection lifecycle.
+- Run Nuxt integration tests directly against the fixture with the project's dependencies.
+- Keep npm publishing, credentials, repository setup, and release operations outside implementation checks.

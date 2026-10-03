@@ -1,0 +1,88 @@
+{
+  "name": "nuxt-surface",
+  "version": "0.0.0",
+  "description": "Serve several sites from one Nuxt app, each with its own pages at the same URLs.",
+  "keywords": [
+    "nuxt",
+    "nuxt-module",
+    "multi-tenant",
+    "multi-site",
+    "subdomain",
+    "routing"
+  ],
+  "license": "MIT",
+  "author": "Ilya Semenov",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IlyaSemenov/nuxt-surface.git"
+  },
+  "homepage": "https://github.com/IlyaSemenov/nuxt-surface#readme",
+  "bugs": "https://github.com/IlyaSemenov/nuxt-surface/issues",
+  "files": [
+    "README.md",
+    "dist",
+    "templates"
+  ],
+  "type": "module",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    },
+    "./hosts": {
+      "types": "./dist/hosts.d.mts",
+      "import": "./dist/hosts.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "tsdown",
+    "types": "tsc --noEmit && tsc --noEmit -p tests/tsconfig.json",
+    "test": "bun test src",
+    "prepublishOnly": "bun run build",
+    "lint": "oxlint --fix && oxfmt",
+    "lint:check": "oxlint && oxfmt --check",
+    "test:nuxt": "nuxt prepare tests/fixtures/app && bun test tests/nuxt.test.ts",
+    "types:nuxt": "nuxt prepare tests/fixtures/app && nuxt typecheck tests/fixtures/app",
+    "test:package": "bun test tests/package.test.ts",
+    "test:spa": "SURFACE_TEST_SPA=true bun run test:nuxt",
+    "test:hmr": "SURFACE_TEST_DEV=true bun run test:nuxt",
+    "test:validation": "bun test tests/validation.test.ts"
+  },
+  "dependencies": {
+    "@nuxt/kit": "^4.0.1",
+    "@nuxt/schema": "^4.0.1"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/core": "^0.18.5",
+    "@changesets/cli": "^3.0.3",
+    "@ilyasemenov/oxc-config": "^0.1.1",
+    "@nuxt/nitro-server": "4.5.2",
+    "@nuxt/test-utils": "4.3.3",
+    "@playwright/test": "1.58.2",
+    "@tsconfig/bun": "^1.0.10",
+    "@types/bun": "^1.4.0",
+    "h3": "^1.15.4",
+    "nuxt": "4.5.2",
+    "nuxt-request-context": "0.4.0",
+    "oxfmt": "^0.71.0",
+    "oxlint": "^1.86.0",
+    "publint": "^0.3.22",
+    "tsdown": "^0.22.14",
+    "typescript": "^5.9.3",
+    "vue-router": "^5.2.0",
+    "vue-tsc": "^3.3.11"
+  },
+  "peerDependencies": {
+    "nuxt": "^4.0.1"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "packageManager": "bun@1.4.2"
+}
