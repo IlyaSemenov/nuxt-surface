@@ -54,13 +54,21 @@ test("surfaces cannot share a host", () => {
   expect(() => defineSurfaceHosts({ docs: "docs", manuals: "DOCS" })).toThrow("share the docs host")
 })
 
-test("surface URLs resolve back to their surfaces regardless of subdomain case", () => {
+test("surface hosts resolve back to their surfaces regardless of case", () => {
   const hosts = defineSurfaceHosts({ site: null, docs: "Docs", regional: "EU.Docs" })
   for (const id of ["site", "docs", "regional"] as const) {
     const hostname = new URL(hosts.url("https://example.com:8443", id)).hostname
     expect(hosts.resolve(hostname, "example.com")).toEqual({ surface: id })
+    expect(hosts.hostname("Example.COM", id)).toBe(hostname)
   }
   expect(hosts.url("https://example.com", "docs")).toBe("https://docs.example.com/")
+  expect(hosts.hostname("example.com", "regional")).toBe("eu.docs.example.com")
+})
+
+test("declared subdomains are lowercased and read-only", () => {
+  const { subdomains } = defineSurfaceHosts({ site: null, docs: "Docs" })
+  expect(subdomains).toEqual({ site: null, docs: "docs" })
+  expect(Object.isFrozen(subdomains)).toBe(true)
 })
 
 test("only null denotes the base host", () => {
@@ -69,4 +77,21 @@ test("only null denotes the base host", () => {
 
 test("surface IDs must not be empty", () => {
   expect(() => defineSurfaceHosts({ "": "docs" })).toThrow("IDs must not be empty")
+})
+
+test("unknown surfaces have no host", () => {
+  const subdomains: Record<string, string | null> = { site: null }
+  const hosts = defineSurfaceHosts(subdomains)
+  expect(() => hosts.hostname("example.com", "typo")).toThrow("unknown surface typo")
+  expect(() => hosts.url("https://example.com", "typo")).toThrow("unknown surface typo")
+})
+
+test("hosts keep the subdomains they were defined with", () => {
+  const subdomains: Record<string, string | null> = { site: null, docs: "docs" }
+  const hosts = defineSurfaceHosts(subdomains)
+  subdomains.docs = "manuals"
+  subdomains.blog = "blog"
+  expect(hosts.subdomains).toEqual({ site: null, docs: "docs" })
+  expect(hosts.hostname("example.com", "docs")).toBe("docs.example.com")
+  expect(hosts.resolve("manuals.example.com", "example.com")).toEqual({ subdomain: "manuals" })
 })

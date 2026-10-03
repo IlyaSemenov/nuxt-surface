@@ -163,6 +163,9 @@ const guideUrl = surfaceHosts.url(useRuntimeConfig().public.baseUrl, "docs", "/g
 A `path` that points to another origin throws.
 Links to a customer workspace are up to your app, since only it knows the workspace's domain.
 
+`hostname(baseHostname, surface)` returns just the hostname of a surface.
+`subdomains` maps each surface to its lowercased subdomain, or `null` for the base hostname, for example to keep customers from registering a surface's subdomain.
+
 Any other way to provide the data works too, as long as it is ready before Nuxt's router plugin on both the server and the browser.
 A regular app plugin runs too late, and with `ssr: false` the data must arrive in the HTML.
 
