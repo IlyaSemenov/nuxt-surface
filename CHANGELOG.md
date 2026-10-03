@@ -1,5 +1,11 @@
 # nuxt-surface
 
+## 0.4.0
+
+### Minor Changes
+
+- 6eafa3d: `defineSurfaceHosts()` takes surface IDs as its type argument, so `defineSurfaceHosts<SurfaceId>({ ... })` requires exactly those surfaces in the map.
+
 ## 0.3.0
 
 ### Minor Changes
