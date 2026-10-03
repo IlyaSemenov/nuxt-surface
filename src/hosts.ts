@@ -3,14 +3,17 @@
 /** A request host that no surface claims, described for an application-specific lookup. */
 export type UnmappedHost =
   /** A subdomain of the base hostname, possibly nested, such as `acme` or `eu.acme`. */
-  | { subdomain: string }
+  | { subdomain: string; surface?: undefined }
   /** Any other hostname, including the base hostname when no surface claims it. */
-  | { domain: string }
+  | { domain: string; surface?: undefined }
+
+/** The result of `resolve()`: a surface, or a host that no surface claims; compare `surface` with `undefined` to tell them apart. */
+export type ResolvedHost<Id extends string> = { surface: Id } | UnmappedHost
 
 /** Hosts of the surfaces passed to `defineSurfaceHosts()`. */
 export interface SurfaceHosts<Id extends string> {
   /** Find the surface of a request hostname, or describe a host that no surface claims. */
-  resolve(hostname: string, baseHostname: string): { surface: Id } | UnmappedHost
+  resolve(hostname: string, baseHostname: string): ResolvedHost<Id>
   /** Build an absolute URL on a surface's host, keeping the protocol and port of the base URL. */
   url(baseUrl: string | URL, surface: Id, path?: string): string
 }
@@ -22,6 +25,8 @@ export function defineSurfaceHosts<const T extends Record<string, string | null>
   const surfaceBySubdomain = new Map<string | null, keyof T & string>()
   const subdomainBySurface = new Map<string, string | null>()
   for (const [surface, value] of Object.entries(subdomains)) {
+    // Empty IDs would be falsy and break truthiness checks of `host.surface`.
+    if (!surface) throw new Error("nuxt-surface: surface IDs must not be empty.")
     if (value === "")
       throw new Error(
         `nuxt-surface: surface ${surface} has an empty subdomain. Use null for the base host.`,

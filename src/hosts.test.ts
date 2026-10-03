@@ -66,3 +66,7 @@ test("surface URLs resolve back to their surfaces regardless of subdomain case",
 test("only null denotes the base host", () => {
   expect(() => defineSurfaceHosts({ site: "" })).toThrow("Use null for the base host")
 })
+
+test("surface IDs must not be empty", () => {
+  expect(() => defineSurfaceHosts({ "": "docs" })).toThrow("IDs must not be empty")
+})

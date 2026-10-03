@@ -124,7 +124,7 @@ import { surfaceHosts } from "#shared/surface-hosts"
 export default defineRequestContextProvider(async event => {
   const baseHostname = new URL(useRuntimeConfig(event).public.baseUrl).hostname
   const host = surfaceHosts.resolve(getRequestURL(event).hostname, baseHostname)
-  if ("surface" in host) return { surface: host.surface }
+  if (host.surface !== undefined) return { surface: host.surface }
   // Other hosts are customer workspaces; findWorkspace() is your lookup by host.subdomain or host.domain.
   const workspace = await findWorkspace(host)
   return { surface: workspace ? ("tenant" as const) : null, workspace }
@@ -144,6 +144,8 @@ export default {
 
 `resolve()` returns `{ surface }` for a mapped host.
 Other hosts are up to your app: a subdomain of the base hostname returns `{ subdomain }`, and any other hostname returns `{ domain }`.
+Their `surface` is `undefined`, so compare `host.surface` with `undefined` or a surface ID to tell the cases apart.
+To type your server context or lookup, use the exported `ResolvedHost<Id>` and `UnmappedHost` types.
 Subdomains are case-insensitive.
 
 When the selector returns `null`, the router has no routes and Nuxt renders its 404 page.
