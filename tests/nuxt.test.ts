@@ -238,4 +238,109 @@ describe(`${dev ? "development" : spa ? "SPA" : "SSR"} surface module`, async ()
         await page.close()
       }
     }, 30_000)
+
+  describe("replaceSurface", () => {
+    type Page = Awaited<ReturnType<typeof createPage>>
+
+    const inspect = (page: Page) =>
+      page.evaluate(() => {
+        const app = (document.querySelector("#__nuxt") as any).__vue_app__.$nuxt
+        const matches = (path: string) => app.$router.resolve(path).matched.length > 0
+        return {
+          surface: app.payload.state["nuxt-surface"],
+          selectorCalls: app.payload.state.selectorCalls,
+          topic: matches("/topic"),
+          section: matches("/section/42"),
+          redirect: matches("/old"),
+          routes: app.$router.getRoutes().length,
+        }
+      })
+    const surfaceTesting = (page: Page, action: "replace" | "restore", id?: string | null) =>
+      page.evaluate(([action, id]) => (window as any).surfaceTesting[action!](id), [action, id])
+    const failRoutes = (page: Page, failure: "throw" | "invalid") =>
+      page.evaluate(failure => {
+        ;(document.querySelector("#__nuxt") as any).__vue_app__.$nuxt.payload.state.routesFailure =
+          failure
+      }, failure)
+
+    test("switches the running app's routes and useSurface(), and restores them in reverse order", async () => {
+      const page = await createPage("/")
+      try {
+        expect(await inspect(page)).toMatchObject({ surface: "site", topic: false, section: true })
+
+        await surfaceTesting(page, "replace", "docs")
+        expect(await inspect(page)).toMatchObject({
+          surface: "docs",
+          selectorCalls: 1,
+          topic: true,
+          section: false,
+          redirect: true,
+        })
+        await page.evaluate(async () => {
+          const app = (document.querySelector("#__nuxt") as any).__vue_app__.$nuxt
+          await app.$router.push("/topic")
+        })
+        await browserExpect(page.locator("#page")).toHaveText("docs-topic")
+
+        await surfaceTesting(page, "replace", null)
+        expect(await inspect(page)).toMatchObject({ surface: null, routes: 0 })
+
+        await surfaceTesting(page, "restore")
+        expect(await inspect(page)).toMatchObject({ surface: "docs", topic: true })
+        await surfaceTesting(page, "restore")
+        expect(await inspect(page)).toMatchObject({
+          surface: "site",
+          selectorCalls: 1,
+          topic: false,
+          section: true,
+          redirect: true,
+        })
+      } finally {
+        await page.close()
+      }
+    }, 30_000)
+
+    test("a failed replace or restore keeps the current surface, and the restore can be retried", async () => {
+      const page = await createPage("/")
+      try {
+        const site = await inspect(page)
+
+        await failRoutes(page, "invalid")
+        await expect(surfaceTesting(page, "replace", "docs")).rejects.toThrow()
+        expect(await inspect(page)).toEqual(site)
+
+        await surfaceTesting(page, "replace", "docs")
+        const docs = await inspect(page)
+        await failRoutes(page, "throw")
+        await expect(surfaceTesting(page, "restore")).rejects.toThrow("routes() failed")
+        expect(await inspect(page)).toEqual(docs)
+        await surfaceTesting(page, "restore")
+        expect(await inspect(page)).toEqual(site)
+      } finally {
+        await page.close()
+      }
+    }, 30_000)
+
+    test("rejects unknown IDs and calls before a surface is selected without changing routes", async () => {
+      const page = await createPage("/")
+      try {
+        const { routes } = await inspect(page)
+
+        for (const id of ["missing", undefined]) {
+          await expect(surfaceTesting(page, "replace", id)).rejects.toThrow("unknown surface ID")
+        }
+        await page.evaluate(() => {
+          delete (document.querySelector("#__nuxt") as any).__vue_app__.$nuxt.payload.state[
+            "nuxt-surface"
+          ]
+        })
+        await expect(surfaceTesting(page, "replace", "docs")).rejects.toThrow(
+          "no surface has been selected yet",
+        )
+        expect((await inspect(page)).routes).toBe(routes)
+      } finally {
+        await page.close()
+      }
+    }, 30_000)
+  })
 })

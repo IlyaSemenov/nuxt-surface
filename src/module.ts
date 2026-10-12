@@ -6,7 +6,7 @@ import type { NuxtModule } from "nuxt/schema"
 import type { ModuleOptions } from "./options"
 import { validateSurfaces } from "./options"
 import { validateSurfacePages } from "./routes"
-import { clientTypesTemplate, surfacesTemplate } from "./templates"
+import { clientTypesTemplate, surfacesTemplate, testingTypesTemplate } from "./templates"
 
 const resolver = createResolver(import.meta.url)
 
@@ -38,6 +38,18 @@ const surfaceModule: NuxtModule<ModuleOptions, ModuleOptions, false> = defineNux
       src: resolver.resolve("../templates/client.mjs"),
       write: true,
     })
+    addTemplate({
+      filename: "surface/testing.d.ts",
+      write: true,
+      getContents: () => testingTypesTemplate(),
+    })
+    const testing = addTemplate({
+      filename: "surface/testing.js",
+      src: resolver.resolve("../templates/testing.mjs"),
+      write: true,
+    })
+    // Register the subpath first: a string alias also matches the longer IDs it prefixes.
+    nuxt.options.alias["#nuxt-surface/testing"] = testing.dst
     nuxt.options.alias["#nuxt-surface"] = client.dst
     addImports({ name: "useSurface", from: client.dst })
 

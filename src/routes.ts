@@ -16,6 +16,12 @@ export function surfaceOf(path: string, surfaces: Record<string, string>): strin
   )
 }
 
+/** Check that a value is null or a declared surface ID. */
+export function isSurfaceIdOrNull(id: unknown, surfaces: Record<string, string>): boolean {
+  // hasOwn converts keys to strings, so an array like ["site"] would pass without the type check.
+  return id === null || (typeof id === "string" && Object.hasOwn(surfaces, id))
+}
+
 /** Keep Nuxt's infrastructure routes unchanged and move the surface's top-level routes to public paths. */
 export function selectRoutes<T extends { path: string; component?: unknown }>(
   routes: readonly T[],

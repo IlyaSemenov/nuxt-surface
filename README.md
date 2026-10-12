@@ -206,6 +206,33 @@ routes: (routes) => selectSurfaceRoutes(routes, () => useRequestContext().surfac
   .map((route) => ({ ...route, meta: { ...route.meta, appFlag: true } })),
 ```
 
+## Testing
+
+When tests share one Nuxt app, its router keeps the surface selected at startup.
+`replaceSurface()` switches the running app to another surface, so a test can render that surface's pages and links:
+
+```ts
+import { replaceSurface } from "#nuxt-surface/testing"
+
+const restoreSurface = await replaceSurface("docs")
+// mount components, navigate, assert
+await restoreSurface()
+```
+
+It reruns `routes()` from `app/router.options.ts` without calling the selector, then installs the returned routes.
+`useSurface()` returns the new ID right away.
+`null` selects no surface.
+
+- Routes added with `router.addRoute()` are dropped.
+- The current route is not matched again; navigate when the test needs a page of the new surface.
+- Restore after mounted components are unmounted and before any test cleanup that navigates the router to a baseline route, which must exist on the original surface.
+
+With [`nuxt-vitest-shared-app`](https://www.npmjs.com/package/nuxt-vitest-shared-app), register the restore as a per-test cleanup, which runs at that point:
+
+```ts
+onNuxtTestCleanup(await replaceSurface("docs"))
+```
+
 ## Limits
 
 - Choosing a surface is not access control: the code of every surface ships in the same build.
