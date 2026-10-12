@@ -1,5 +1,11 @@
 # nuxt-surface
 
+## 0.5.0
+
+### Minor Changes
+
+- 609c36a: Add `replaceSurface()` to `#nuxt-surface/testing` for switching a running app to another surface in tests.
+
 ## 0.4.1
 
 ### Patch Changes
