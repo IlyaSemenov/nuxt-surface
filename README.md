@@ -145,30 +145,10 @@ export default {
 Any other way to provide the data works too, as long as it is ready before Nuxt's router plugin on both the server and the browser.
 A regular app plugin runs too late, and with `ssr: false` the data must arrive in the HTML.
 
-`resolve()` returns `{ surface }` for a mapped host.
-Other hosts are up to your app: a subdomain of the base hostname returns `{ subdomain }`, and any other hostname returns `{ domain }`.
-The result type is `ResolvedHost<Id>`, and unmapped hosts are `UnmappedHost`.
-
-Hostnames are case-insensitive ASCII, as `new URL(url).hostname` returns them.
-Write internationalized surface subdomains in Punycode, and store customer subdomains and domains in ASCII for lookups.
-
 When the selector returns `null`, the router has no routes and Nuxt renders its 404 page.
 With SSR the response status is 404; with `ssr: false` the HTML comes with status 200 and the browser shows the 404 page.
 
-Links to another surface are full page loads.
-`getUrl()` builds them on the surface's host, keeping the protocol and port of the base URL:
-
-```ts
-const guideUrl = productSurfaces.getUrl(useRuntimeConfig().public.baseUrl, "docs", "/guide/42")
-```
-
-`path` resolves against the base URL and must stay on its origin.
-For asset URLs, which `app.cdnURL` can make absolute, use `new URL(asset, productSurfaces.getUrl(baseUrl, "site")).href` instead.
-
-Links to customer workspaces are up to your app.
-
-`getHostname(baseHostname, surface)` returns just the hostname of a surface.
-`subdomains` maps each surface to its lowercased subdomain, or `null` for the base hostname, for example to keep customers from registering a surface's subdomain.
+See [Host map](#host-map) for what `resolve()` returns and how hostnames are compared.
 
 ## Reading the surface
 
@@ -182,6 +162,24 @@ Plugins, global middleware, and `error.vue` still run without a surface, so hand
 
 The surface stays the same for the whole page session, including client-side navigation and page HMR.
 To switch surfaces, load a new page with a regular link, `<NuxtLink external>`, or `location.assign()`.
+
+## Linking between surfaces
+
+Links to another surface are full page loads.
+`getUrl()` from your host map builds them on the surface's host, keeping the protocol and port of the base URL:
+
+```ts
+const guideUrl = productSurfaces.getUrl(useRuntimeConfig().public.baseUrl, "docs", "/guide/42")
+```
+
+```vue
+<NuxtLink :to="guideUrl" external>Guide</NuxtLink>
+```
+
+`path` resolves against the base URL and must stay on its origin.
+For asset URLs, which `app.cdnURL` can make absolute, use `new URL(asset, productSurfaces.getUrl(baseUrl, "site")).href` instead.
+
+Links to customer workspaces are up to your app.
 
 ## Pages
 
@@ -232,6 +230,20 @@ With [`nuxt-vitest-shared-app`](https://www.npmjs.com/package/nuxt-vitest-shared
 ```ts
 onNuxtTestCleanup(await replaceSurface("docs"))
 ```
+
+## Host map
+
+`defineSurfaceHosts()` from `nuxt-surface/hosts` returns a map with these members:
+
+- `resolve(hostname, baseHostname)` returns `{ surface }` for a mapped host.
+  Other hosts are up to your app: a subdomain of the base hostname returns `{ subdomain }`, and any other hostname returns `{ domain }`.
+  The result type is `ResolvedHost<Id>`, and unmapped hosts are `UnmappedHost`.
+- `getUrl(baseUrl, surface, path?)` builds a URL on the surface's host, see [Linking between surfaces](#linking-between-surfaces).
+- `getHostname(baseHostname, surface)` returns just the hostname of a surface.
+- `subdomains` maps each surface to its lowercased subdomain, or `null` for the base hostname, for example to keep customers from registering a surface's subdomain.
+
+Hostnames are case-insensitive ASCII, as `new URL(url).hostname` returns them.
+Write internationalized surface subdomains in Punycode, and store customer subdomains and domains in ASCII for lookups.
 
 ## Limits
 
